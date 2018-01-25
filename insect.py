@@ -6,7 +6,7 @@
 
 
 # 一个类植物大战僵尸的游戏，用来练习oop
-
+import random
 
 class Place:
     """ 每一个place相关的属性，方法在这里
@@ -91,6 +91,30 @@ class HarvesterAnt(Ant):
         colony.food += 1
 
 
+class FireAnt(Ant):
+
+    name = 'Fire'
+    food_cost = 3
+    damage = 3
+
+    def reduce_armor(self, amount):
+        """
+        如果这个ant死掉，会对当前位置的所有bee产生伤害
+        :param amount:
+        :return:
+        """
+
+        self.armor -= amount
+        if self.armor <= 0:
+            for b in self.place.bees[:]:
+                b.reduce_armor(self.damage)
+            self.place.remove_insect(self)
+
+
+def random_or_none(s):
+    if s:
+        return random.choice(s)
+
 class ThrowerAnt(Ant):
 
     name = 'Thrower'
@@ -98,10 +122,29 @@ class ThrowerAnt(Ant):
     damage = 1
     max_range = 1 # 最大的攻击范围
 
-class FireAnt(Ant):
 
-    name = 'Fire'
-    food_cost = 3
+    def nearest_bee(self, hive):
+        """ 获取攻击范围内的bee。 """
+        i = 0
+        place = self.place
+        bee = random_or_none(self.place.bees)
+        # 这里的思路就是从当前的位置向攻击范围可以达到的
+        # 位置进行搜索，如果搜索到目标就停止。
+        # 并且这个位置不能是hive, 并且位置需要是存在的。
+        while bee is None and place is not hive and\
+                i <= self.max_range and place.entrance:
+            place = place.entrance
+            i += 1
+            bee = random_or_none(place.bees)
+        return bee
+
+    def throw_at(self, target):
+        """ 对目标范围内的进行攻击"""
+        if target is not None:
+            target.reduce_armor(self.damage)
+
+    def action(self, colony):
+        self.throw_at(self.nearest_bee(colony))
 
 
 class LongThrower(ThrowerAnt):
@@ -117,7 +160,7 @@ class ShortThrower(ThrowerAnt):
 
 
 class WallAnt(Ant):
-    """ 防御性 。"""
+    """ 防御性的 。"""
     name = 'Short'
     food_cost = 4
 
@@ -165,6 +208,8 @@ class AssaultPlan(dict):
 
     def __str__(self):
         pass
+
+
 
 if __name__ == '__main__':
     a = Ant(2)
