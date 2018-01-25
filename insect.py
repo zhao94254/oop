@@ -63,6 +63,9 @@ class Insect:
         if self.armor <= 0:
             self.place.remove_insect(self)
 
+    def action(self, colony):
+        pass
+
     def __str__(self):
         name = type(self).__name__
         return name
@@ -75,11 +78,74 @@ class Ant(Insect):
     is_ant = True
     food_cost = 0
 
+    def __init__(self, armor=1):
+        Insect.__init__(self, armor)
+
+
+class HarvesterAnt(Ant):
+    name = 'Harvester'
+    food_cost = 2
+
+    def action(self, colony):
+        """ 产生食物。"""
+        colony.food += 1
+
+
+class ThrowerAnt(Ant):
+
+    name = 'Thrower'
+    food_cost = 1
+    damage = 1
+    max_range = 1 # 最大的攻击范围
+
+class FireAnt(Ant):
+
+    name = 'Fire'
+    food_cost = 3
+
+
+class LongThrower(ThrowerAnt):
+    name = 'Long'
+    food_cost = 2
+    max_range = 5  # 最大的攻击范围
+
+
+class ShortThrower(ThrowerAnt):
+    name = 'Short'
+    food_cost = 2
+    max_range = 3  # 最大的攻击范围
+
+
+class WallAnt(Ant):
+    """ 防御性 。"""
+    name = 'Short'
+    food_cost = 4
+
+    def __init__(self):
+        Ant.__init__(self, 5)
+
+
+class HungryAnt(Ant):
+
+    name = 'Hungry'
+    food_cost = 4
+    time_to_digest = 3 # 冷却时间
+
+
 
 class Bee(Insect):
     """ 攻的一方"""
     damage = 1
     name = 'Bee'
+
+    def sting(self, ant):
+        """ 攻击 ant， 减掉相应的血"""
+        ant.reduce_armor(self.damage)
+
+    def move_to(self, place):
+        """ 移动到一个新的地方"""
+        self.place.remove_insect(self)
+        place.add_insect(self)
 
 
 
