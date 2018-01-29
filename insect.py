@@ -18,6 +18,8 @@ class Place:
         self.bees = []  # 一个位置可以放多个
         self.ant = None
         self.entrance = None
+        if self.exit:
+            self.exit.entrance = self # 这里出一个地方出去，从另一个再进去
 
     def add_insect(self, insect):
         if insect.is_ant:
@@ -208,6 +210,46 @@ class AssaultPlan(dict):
 
     def __str__(self):
         pass
+
+
+class ExitPlace(Place):
+
+    def add_insect(self, insect):
+        assert not insect.is_ant, "无法在这里放{}".format(insect)
+        raise BeesWin()
+
+
+class BeesWin(Exception):
+
+    def __str__(self):
+        return "bee win!!!"
+
+
+class AntWin(Exception):
+    def __str__(self):
+        return "ant win!!!"
+
+
+def ant_win():
+    raise AntWin()
+
+class AntColony:
+    """ 管理这一堆ant
+
+    """
+
+    def __init__(self, food):
+        self.time = 0
+        self.food = food
+
+
+def layout(exit_place, register_place, tunnels, length=5):
+    """ 将place注册进来"""
+    for tunnel in tunnels:
+        exit = exit_place
+        for step in range(length):
+            exit = Place("tunnel_{}_{}".format(tunnel, step), exit)
+        # todo
 
 
 
