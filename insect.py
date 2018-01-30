@@ -15,7 +15,7 @@ def debug(fn):
     """ debug用。。"""
     if _debug:
         print(fn())
-    # return fn()
+    return fn()
 
 class Place:
     """ 每一个place相关的属性，方法在这里
@@ -245,7 +245,11 @@ class Hive(Place):
         self.exit = None
 
     def strategy(self, colony):
-        pass
+        """ 从蜂巢随机选择bee 放出"""
+        exits = [p for p in colony.places.values() if p.entrance is self] # 从所以的place中获取是hive 的
+        for bee in self.assault_plan.get(colony.time, []): # 按照不同的时间点来释放一波
+            bee.move_to(random.choice(exits)) # 在hive中随机选择一个地方将bee放出来
+            colony.active_bees.append(bee)
 
 
 class BeesWin(Exception):
@@ -288,26 +292,72 @@ class AntColony:
         self.ant_types = OrderedDict((a.name, a) for a in ant_types)
         self.dimensions = dimensions # 规模。几条路 路的长度
         self.strategy = strategy
+        self.hive = hive
         self.set_place(hive, create_places)
 
     def set_place(self, hive, create_place):
-        pass
+        self.exit_place = ExitPlace('exit place')
+        self.places = OrderedDict()
+        self.bee_entrance = []
+
+        def register_place(place, is_bee_entrance):
+            self.places[place.name] = place
+            if is_bee_entrance:
+                place.entrance = hive # 在这里设置bee的入口，也就是hive
+                self.bee_entrance.append(place)
+        register_place(self.hive, False)
+        create_place(self.exit_place, register_place, self.dimensions[0], self.dimensions[1] )
+
+    def test(self):
+        self.hive.strategy(self)  # Bees invade
+        self.strategy(self)
+        return 0
+
+    @property
+    def ants(self):
+        return [p.ant for p in self.places.values() if p.ant is not None]
+
+    @property
+    def bees(self):
+        return [b for p in self.places.values() for b in p.bees]
+
+    @property
+    def insects(self):
+        return self.ants + self.bees
+
+    def __str__(self):
+        return str([ str(i) for i in self.insects])
+
 
 def layout(exit_place, register_place, tunnels, length=5):
     """ 将place注册进来"""
-    for tunnel in tunnels:
+    for tunnel in range(tunnels):
         exit = exit_place
         for step in range(length):
             exit = Place("tunnel_{}_{}".format(tunnel, step), exit)
-            register_place(exit_place, step == length-1)
+            register_place(exit, step == length-1) # 这里将每个place 注册进来
 
 
+def make_test_assault_plan():
+    return AssaultPlan().add_wave(Bee, 3, 2, 4)
 
-if __name__ == '__main__':
-    a = Ant(2)
-    b = Bee(3)
-    p = Place('x')
-    p.add_insect(a)
-    print(p.ant)
-    a.reduce_armor(1)
-    print(p.ant)
+
+def strategy(colony):
+    pass
+
+
+def test():
+    assault = make_test_assault_plan()
+    dimensions = (2, 3)
+    hive = Hive(assault)
+    return AntColony(2, ant_types, hive, layout, strategy, dimensions).test()
+
+test()
+# if __name__ == '__main__':
+#     a = Ant(2)
+#     b = Bee(3)
+#     p = Place('x')
+#     p.add_insect(a)
+#     print(p.ant)
+#     a.reduce_armor(1)
+#     print(p.ant)
