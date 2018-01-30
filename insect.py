@@ -7,6 +7,15 @@
 
 # 一个类植物大战僵尸的游戏，用来练习oop
 import random
+from collections import OrderedDict
+
+_debug = True
+
+def debug(fn):
+    """ debug用。。"""
+    if _debug:
+        print(fn())
+    # return fn()
 
 class Place:
     """ 每一个place相关的属性，方法在这里
@@ -40,6 +49,9 @@ class Place:
             self.bees.remove(insect)
 
         insect.place = None
+
+    def action(self, colony):
+        pass
 
 
     def __str__(self):
@@ -193,7 +205,6 @@ class Bee(Insect):
         place.add_insect(self)
 
 
-
 class AssaultPlan(dict):
     """ 将bee 部署出来。"""
 
@@ -219,6 +230,24 @@ class ExitPlace(Place):
         raise BeesWin()
 
 
+class Hive(Place):
+    """ 将assault plan 中的bee真正的放出来"""
+
+    def __init__(self, assault_plan):
+        super().__init__(self)
+        self.name = "Hive"
+        self.bees = []
+        self.assault_plan = assault_plan
+        for bee in assault_plan.all_bees:
+            self.add_insect(bee)
+        self.entrance = None
+        self.ant = None
+        self.exit = None
+
+    def strategy(self, colony):
+        pass
+
+
 class BeesWin(Exception):
 
     def __str__(self):
@@ -233,15 +262,36 @@ class AntWin(Exception):
 def ant_win():
     raise AntWin()
 
+
+def sub_class(base_class):
+    """ 返回一个类的所有子类"""
+    all_types = []
+    new_types = [base_class]
+    while new_types:
+        new_types = [t for c in new_types for t in c.__subclasses__()]
+        all_types.extend(new_types)
+    return [t for t in all_types]
+
+
+@debug
+def ant_types():
+    return sub_class(Ant)
+
 class AntColony:
     """ 管理这一堆ant
 
     """
 
-    def __init__(self, food):
+    def __init__(self, food, ant_types, hive, create_places, strategy, dimensions):
         self.time = 0
         self.food = food
+        self.ant_types = OrderedDict((a.name, a) for a in ant_types)
+        self.dimensions = dimensions # 规模。几条路 路的长度
+        self.strategy = strategy
+        self.set_place(hive, create_places)
 
+    def set_place(self, hive, create_place):
+        pass
 
 def layout(exit_place, register_place, tunnels, length=5):
     """ 将place注册进来"""
@@ -249,7 +299,7 @@ def layout(exit_place, register_place, tunnels, length=5):
         exit = exit_place
         for step in range(length):
             exit = Place("tunnel_{}_{}".format(tunnel, step), exit)
-        # todo
+            register_place(exit_place, step == length-1)
 
 
 
